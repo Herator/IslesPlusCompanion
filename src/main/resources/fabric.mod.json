@@ -9,7 +9,7 @@
 		"sources": "https://github.com/Herator/IslesPlusPlus",
 		"issues": "https://github.com/Herator/IslesPlusPlus/issues"
 	},
-	"license": "Unlicense",
+	"license": "CC-BY-NC-SA-4.0",
 	"icon": "assets/islesplusplus/icon.png",
 	"environment": "client",
 	"entrypoints": {

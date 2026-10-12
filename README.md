@@ -37,7 +37,7 @@ Every release has its own branch named `v<mod version>-<Minecraft version>` (`v1
 
 ## License
 
-[The Unlicense](LICENSE): public domain, do whatever you want with it. Isles+ itself is not covered by this; it's a separate mod by its own authors.
+[CC BY-NC-SA 4.0](LICENSE): you can share and change it, but credit me, don't sell it, and put your version under the same license. Isles+ itself is not covered by this; it's a separate mod by its own authors.
 
 ## Building
 
