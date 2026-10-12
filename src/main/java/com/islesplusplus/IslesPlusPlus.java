@@ -43,6 +43,7 @@ public class IslesPlusPlus implements ClientModInitializer {
     public static final KeyBinding HEALTH_BORDER_KEY = key("health_border", GLFW.GLFW_KEY_UNKNOWN);
     public static final KeyBinding MAP_KEY = key("map", GLFW.GLFW_KEY_M);
     public static final KeyBinding WAYPOINTS_KEY = key("waypoints", GLFW.GLFW_KEY_UNKNOWN);
+    public static final KeyBinding BOOKMARK_KEY = key("bookmark_item", GLFW.GLFW_KEY_A);   // used in ItemBrowserMixin
 
     private static int partyTimer;
 

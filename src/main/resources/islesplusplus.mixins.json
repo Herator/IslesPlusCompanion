@@ -7,9 +7,12 @@
 		"EntityGlowMixin",
 		"FontsMixin",
 		"HudElementsMixin",
+		"InventorySearchMixin",
 		"IslesPlusConfigMixin",
+		"ItemBrowserMixin",
 		"ItemPickupMixin",
-		"RowsMixin"
+		"RowsMixin",
+		"ScreenMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

@@ -34,6 +34,7 @@ public final class AddonConfig {
         ItemPickupLog.enabled   = bool(o, "itemPickupLogEnabled", true);
         GroundGlow.enabled      = bool(o, "groundGlowEnabled", true);
         IslesMap.minimapEnabled = bool(o, "minimapEnabled", true);
+        BrowserCollapse.collapsed = bool(o, "itemBrowserCollapsed", false);
         IslesMap.generating     = bool(o, "mapGenerating", true);
         IslesMap.zoom = Math.max(IslesMap.MIN_ZOOM, Math.min(IslesMap.MAX_ZOOM, num(o, "minimapZoom", 1f)));
         MapPois.split(o.has("mapHiddenPoints") ? o.get("mapHiddenPoints").getAsString() : "", MapPois.hidden);
@@ -50,6 +51,7 @@ public final class AddonConfig {
         o.addProperty("itemPickupLogEnabled", ItemPickupLog.enabled);
         o.addProperty("groundGlowEnabled", GroundGlow.enabled);
         o.addProperty("minimapEnabled", IslesMap.minimapEnabled);
+        o.addProperty("itemBrowserCollapsed", BrowserCollapse.collapsed);
         o.addProperty("mapGenerating", IslesMap.generating);
         o.addProperty("minimapZoom", IslesMap.zoom);
         o.addProperty("mapHiddenPoints", MapPois.join(MapPois.hidden));
