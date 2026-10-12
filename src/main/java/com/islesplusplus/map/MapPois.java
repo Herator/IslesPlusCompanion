@@ -740,7 +740,7 @@ public final class MapPois {
     public record Shown(java.util.function.Supplier<List<Text>> tooltip, int x, int y, int z, int sx, int sy) {}
 
     // same colours as the game's node tooltips
-    private static final int COUNT = 0xA8C4B0, NAME = 0xF4EAD2, NAVIGATE = 0x55FF55;
+    static final int COUNT = 0xA8C4B0, NAME = 0xF4EAD2, NAVIGATE = 0x55FF55;
 
     static List<Text> tooltip(String name) {
         return List.of(Text.literal(title(name)).withColor(NAME), Text.empty(), Text.literal("Click to navigate!").withColor(NAVIGATE));
@@ -813,6 +813,7 @@ public final class MapPois {
     // (x, y, w, h) box, centred on (cx, cz). on the minimap the centre is you
     static List<Shown> draw(DrawContext ctx, int x, int y, int w, int h, double cx, double cz, float ppb, boolean minimap) {
         List<Shown> drawn = new ArrayList<>();
+        Trails.draw(ctx, drawn, x, y, w, h, cx, cz, ppb);   // under everything else
         boolean zoomedIn = Math.max(w, h) / 2.0 / ppb <= STATION_RANGE;
         Map<Long, List<Poi>> nodeCells = new LinkedHashMap<>();
         Map<Poi, int[]> live = plushies(PlushieRepository.getCachedPlushies(), PlushieRepository::isOwned, PlushieFinder.hideFirstPlushie);

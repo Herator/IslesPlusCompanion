@@ -11,6 +11,7 @@ Started as a few things I wanted in Isles+ and kept growing. What's in it:
 - **Waypoints**: middle click the map or `/waypoint x z` (or `x y z`, or `clear`). Shows up as a beacon beam with the distance
 - Saved waypoints: `/waypoints`, the button on the map, or right click the full map to add one
 - `/poi` to add/remove/record your own map points (mostly a dev thing)
+- **Paths**: `/path` opens a menu for all of it. `/path record`, walk it, `/path node add <name>` to drop a marker at head height, then `/path end` and `/path save [name]` (or `/path discard`). `/path save` while recording ends and saves in one go. `/path start <name>` shows a saved path on both maps and as a line on the ground (one at a time), `/path stop` hides it. `/path list`, `/path delete <name>`
 - **Health Border** - screen edges glow red as your HP drops
 - Item Pickups: shows what you pick up with the icon and amount
 - Glow on all ground items

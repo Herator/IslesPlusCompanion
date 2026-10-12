@@ -9,6 +9,8 @@ import com.islesplusplus.map.IslesMap;
 import com.islesplusplus.map.MapPois;
 import com.islesplusplus.map.MapScreen;
 import com.islesplusplus.map.Party;
+import com.islesplusplus.map.PathsScreen;
+import com.islesplusplus.map.Trails;
 import com.islesplusplus.map.WaypointRenderer;
 import com.islesplusplus.map.WaypointsScreen;
 import com.mojang.brigadier.CommandDispatcher;
@@ -72,6 +74,7 @@ public class IslesPlusPlus implements ClientModInitializer {
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> registerCommands(dispatcher));
         ClientTickEvents.END_CLIENT_TICK.register(IslesPlusPlus::tick);
         WorldRenderEvents.AFTER_ENTITIES.register(WaypointRenderer::render);
+        WorldRenderEvents.AFTER_ENTITIES.register(Trails::render);
         HudRenderCallback.EVENT.register((context, tickDelta) -> HealthBorder.render(context, MinecraftClient.getInstance()));
         ChatTabs.register();
         ClientChunkEvents.CHUNK_UNLOAD.register((world, chunk) -> IslesMap.forgetChunk(chunk.getPos()));
@@ -91,6 +94,7 @@ public class IslesPlusPlus implements ClientModInitializer {
         while (WAYPOINTS_KEY.wasPressed()) client.setScreen(new WaypointsScreen(null));
         guarded("map", () -> IslesMap.tick(client));
         guarded("map_record", () -> MapPois.recordTick(client));
+        guarded("path", () -> Trails.tick(client));
         if (++partyTimer >= 20) {
             partyTimer = 0;
             guarded("party", () -> Party.tick(client));
@@ -155,6 +159,38 @@ public class IslesPlusPlus implements ClientModInitializer {
                         sendInfoMessage(MinecraftClient.getInstance(), removed ? "Chat tab removed: " + name + "." : "No chat tab called " + name + ".");
                         return removed ? 1 : 0;
                     }))));
+        // /path (menu) | record | node add <name> | end | save [name] | discard | start <name> | stop | list | delete <name>
+        dispatcher.register(ClientCommandManager.literal("path")
+            .executes(context -> {
+                MinecraftClient c = MinecraftClient.getInstance();
+                c.execute(() -> c.setScreen(new PathsScreen(null)));
+                return 1;
+            })
+            .then(ClientCommandManager.literal("record").executes(context -> pathCommand(Trails::record)))
+            .then(ClientCommandManager.literal("start")
+                .then(ClientCommandManager.argument("name", StringArgumentType.greedyString())
+                    .suggests(IslesPlusPlus::suggestPaths)
+                    .executes(context -> pathCommand(p -> Trails.start(StringArgumentType.getString(context, "name"))))))
+            .then(ClientCommandManager.literal("stop").executes(context -> pathCommand(p -> Trails.stop())))
+            .then(ClientCommandManager.literal("node").then(ClientCommandManager.literal("add")
+                .then(ClientCommandManager.argument("name", StringArgumentType.greedyString())
+                    .executes(context -> pathCommand(p -> Trails.addNode(p, StringArgumentType.getString(context, "name")))))))
+            .then(ClientCommandManager.literal("end").executes(context -> pathCommand(p -> Trails.end())))
+            .then(ClientCommandManager.literal("save")
+                .executes(context -> pathCommand(p -> Trails.save(null)))
+                .then(ClientCommandManager.argument("name", StringArgumentType.greedyString())
+                    .executes(context -> pathCommand(p -> Trails.save(StringArgumentType.getString(context, "name"))))))
+            .then(ClientCommandManager.literal("discard").executes(context -> pathCommand(p -> Trails.discard())))
+            .then(ClientCommandManager.literal("list").executes(context -> {
+                MinecraftClient c = MinecraftClient.getInstance();
+                if (Trails.all().isEmpty()) sendInfoMessage(c, "No saved paths.");
+                for (Trails.Trail t : Trails.all()) sendInfoMessage(c, t.name + ": " + t.nodes.size() + " nodes");
+                return 1;
+            }))
+            .then(ClientCommandManager.literal("delete")
+                .then(ClientCommandManager.argument("name", StringArgumentType.greedyString())
+                    .suggests(IslesPlusPlus::suggestPaths)
+                    .executes(context -> pathCommand(p -> Trails.delete(StringArgumentType.getString(context, "name")))))));
         dispatcher.register(ClientCommandManager.literal("waypoints").executes(context -> {
             MinecraftClient c = MinecraftClient.getInstance();
             c.execute(() -> c.setScreen(new WaypointsScreen(null)));
@@ -212,6 +248,19 @@ public class IslesPlusPlus implements ClientModInitializer {
         ChatTabs.put(name, filter);
         IslesPlusConfig.save();
         sendInfoMessage(MinecraftClient.getInstance(), "Chat tab " + name + ": " + (filter.isBlank() ? "everything" : filter) + ".");
+        return 1;
+    }
+
+    private static java.util.concurrent.CompletableFuture<com.mojang.brigadier.suggestion.Suggestions> suggestPaths(
+            com.mojang.brigadier.context.CommandContext<FabricClientCommandSource> context, com.mojang.brigadier.suggestion.SuggestionsBuilder builder) {
+        for (Trails.Trail t : Trails.all()) builder.suggest(t.name);
+        return builder.buildFuture();
+    }
+
+    private static int pathCommand(java.util.function.Function<net.minecraft.client.network.ClientPlayerEntity, String> run) {
+        MinecraftClient c = MinecraftClient.getInstance();
+        if (c.player == null) return 0;
+        sendInfoMessage(c, run.apply(c.player));
         return 1;
     }
 

@@ -65,7 +65,7 @@ public final class IslesMap {
 
     static final int TILE = 512;
     // method not a constant, FabricLoader isn't there in tests
-    private static Path localDir() { return FabricLoader.getInstance().getConfigDir().resolve("islesplusplus").resolve("map"); }
+    static Path localDir() { return FabricLoader.getInstance().getConfigDir().resolve("islesplusplus").resolve("map"); }
     private static Path heightsDir() { return localDir().resolve("heights"); }
     static final int NO_HEIGHT = Short.MIN_VALUE;
     // TODO: scale CHUNKS_PER_TICK with render distance?
