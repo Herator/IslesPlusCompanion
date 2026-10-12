@@ -11,7 +11,9 @@ Started as a few things I wanted in Isles+ and kept growing. What's in it:
 - **Waypoints**: middle click the map or `/waypoint x z` (or `x y z`, or `clear`). Shows up as a beacon beam with the distance
 - Saved waypoints: `/waypoints`, the button on the map, or right click the full map to add one
 - `/poi` to add/remove/record your own map points (mostly a dev thing)
-- **Paths**: `/path` opens a menu for all of it. `/path record`, walk it, `/path node add <name>` to drop a marker at head height, then `/path end` and `/path save [name]` (or `/path discard`). `/path save` while recording ends and saves in one go. `/path start <name>` shows a saved path on both maps and as a line on the ground (one at a time), `/path stop` hides it. `/path list`, `/path delete <name>`
+- **Paths**: `/path` opens a menu for all of it. `/path record`, walk it, `/path node add <name>` to drop a marker at head height, then `/path end` and `/path save [name]` (or `/path discard`). `/path save` while recording ends and saves in one go. `/path start <name>` shows a saved path on both maps and as a line on the ground (one at a time), `/path stop` hides it. `/path list`, `/path delete <name>`. Renaming is in the `/path` menu. Each path is its own file in `config/islesplusplus/map/paths/` if you want to share one
+- **Chat Tabs**: tabs above the chat, each with its own filter (comma separated words, `-word` to hide lines with it). Right click a tab to edit it, + opens the tab list
+- **Item Browser**: a button to fold the Isles+ item browser away, and a key (A) to bookmark the item under your mouse
 - **Health Border** - screen edges glow red as your HP drops
 - Item Pickups: shows what you pick up with the icon and amount
 - Glow on all ground items
@@ -19,6 +21,8 @@ Started as a few things I wanted in Isles+ and kept growing. What's in it:
 <img src="screenshots/minimap.png" width="200"> <img src="screenshots/show-panel.png" width="160">
 
 <img src="screenshots/waypoints.png" width="450"> <img src="screenshots/add-waypoint.png" width="350">
+
+The paths, waypoints and chat tab windows (and the full map) are on a paper scroll that unrolls when it opens. Don't like the animation? Turn off Unroll animation in the Map row.
 
 Settings are in the Isles+ menu (QOL tab). The minimap and Item Pickups can be moved in the HUD editor, keys are under Options > Controls > Isles++.
 Everything saves to `config/islesplusplus/`. If you had a map from back when this was part of Isles+ (`config/islesplus/map`) it gets moved over on first start.
