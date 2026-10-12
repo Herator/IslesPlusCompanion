@@ -4,6 +4,7 @@
 	"compatibilityLevel": "JAVA_21",
 	"mixins": [],
 	"client": [
+		"ChatHudMixin",
 		"EntityGlowMixin",
 		"FontsMixin",
 		"HudElementsMixin",

@@ -8,14 +8,18 @@ import com.islesplus.ui.Fonts;
 import com.islesplus.ui.Metrics;
 import com.islesplus.ui.Theme;
 import com.islesplus.ui.Widget;
+import com.islesplus.ui.widgets.Button;
 import com.islesplus.ui.widgets.FootnoteBox;
 import com.islesplus.ui.widgets.InfoChip;
 import com.islesplus.ui.widgets.Label;
 import com.islesplus.ui.widgets.SmallToggle;
 import com.islesplus.ui.widgets.ValueSlider;
+import com.islesplusplus.chattabs.ChatTabs;
+import com.islesplusplus.chattabs.ChatTabsScreen;
 import com.islesplusplus.healthborder.HealthBorder;
 import com.islesplusplus.itempickup.ItemPickupLog;
 import com.islesplusplus.map.IslesMap;
+import net.minecraft.client.MinecraftClient;
 
 import java.util.List;
 
@@ -37,6 +41,17 @@ public final class AddonRows {
         rows.add(new FeatureRow("Glow All Ground Items", "Make every dropped item on the ground glow.")
             .toggle(() -> GroundGlow.enabled,
                 v -> { GroundGlow.enabled = v; IslesPlusConfig.save(); }));
+        rows.add(new FeatureRow("Chat Tabs", "Tabs above the chat box, each with its own filter.")
+            .toggle(() -> ChatTabs.enabled,
+                v -> { ChatTabs.enabled = v; ChatTabs.refreshChat(); IslesPlusConfig.save(); })
+            .drawer(new Flow.Column(Metrics.DRAWER_GAP)
+                .add(new Flow.WrapRow(ROW_GAP, ROW_GAP)
+                    .add(new Button("Edit tabs", Button.Kind.SECONDARY, () -> {
+                        var c = MinecraftClient.getInstance();
+                        c.setScreen(new ChatTabsScreen(c.currentScreen));
+                    }).small()))
+                .add(new FootnoteBox("In chat: left click a tab to open it, right click to edit it.",
+                    "+ opens this list. /chattab works too."))));
     }
 
     private static FeatureRow healthBorder() {

@@ -2,6 +2,7 @@ package com.islesplusplus;
 
 import com.islesplus.IslesPlusConfig;
 import com.islesplus.logging.IslesLog;
+import com.islesplusplus.chattabs.ChatTabs;
 import com.islesplusplus.healthborder.HealthBorder;
 import com.islesplusplus.itempickup.ItemPickupLog;
 import com.islesplusplus.map.IslesMap;
@@ -72,6 +73,7 @@ public class IslesPlusPlus implements ClientModInitializer {
         ClientTickEvents.END_CLIENT_TICK.register(IslesPlusPlus::tick);
         WorldRenderEvents.AFTER_ENTITIES.register(WaypointRenderer::render);
         HudRenderCallback.EVENT.register((context, tickDelta) -> HealthBorder.render(context, MinecraftClient.getInstance()));
+        ChatTabs.register();
         ClientChunkEvents.CHUNK_UNLOAD.register((world, chunk) -> IslesMap.forgetChunk(chunk.getPos()));
         ClientLifecycleEvents.CLIENT_STOPPING.register(c -> IslesMap.save(true));
     }
@@ -126,6 +128,33 @@ public class IslesPlusPlus implements ClientModInitializer {
                     return 1;
                 }))
         );
+        // /chattab list | add <name> [filter] | remove <name>
+        dispatcher.register(ClientCommandManager.literal("chattab")
+            .then(ClientCommandManager.literal("list").executes(context -> {
+                MinecraftClient c = MinecraftClient.getInstance();
+                for (ChatTabs.Tab t : ChatTabs.tabs)
+                    sendInfoMessage(c, t.name() + ": " + (t.filter().isBlank() ? "everything" : t.filter()));
+                return 1;
+            }))
+            .then(ClientCommandManager.literal("add")
+                .then(ClientCommandManager.argument("name", StringArgumentType.string())
+                    .executes(context -> addChatTab(StringArgumentType.getString(context, "name"), ""))
+                    .then(ClientCommandManager.argument("filter", StringArgumentType.greedyString())
+                        .executes(context -> addChatTab(StringArgumentType.getString(context, "name"),
+                            StringArgumentType.getString(context, "filter"))))))
+            .then(ClientCommandManager.literal("remove")
+                .then(ClientCommandManager.argument("name", StringArgumentType.string())
+                    .suggests((context, builder) -> {
+                        for (ChatTabs.Tab t : ChatTabs.tabs) builder.suggest(StringArgumentType.escapeIfRequired(t.name()));
+                        return builder.buildFuture();
+                    })
+                    .executes(context -> {
+                        String name = StringArgumentType.getString(context, "name");
+                        boolean removed = ChatTabs.remove(name);
+                        if (removed) IslesPlusConfig.save();
+                        sendInfoMessage(MinecraftClient.getInstance(), removed ? "Chat tab removed: " + name + "." : "No chat tab called " + name + ".");
+                        return removed ? 1 : 0;
+                    }))));
         dispatcher.register(ClientCommandManager.literal("waypoints").executes(context -> {
             MinecraftClient c = MinecraftClient.getInstance();
             c.execute(() -> c.setScreen(new WaypointsScreen(null)));
@@ -177,6 +206,13 @@ public class IslesPlusPlus implements ClientModInitializer {
                 sendInfoMessage(MinecraftClient.getInstance(), "Map points reloaded: " + n + ".");
                 return 1;
             })));
+    }
+
+    private static int addChatTab(String name, String filter) {
+        ChatTabs.put(name, filter);
+        IslesPlusConfig.save();
+        sendInfoMessage(MinecraftClient.getInstance(), "Chat tab " + name + ": " + (filter.isBlank() ? "everything" : filter) + ".");
+        return 1;
     }
 
     // map used to live in config/islesplus/map back when this was part of Isles+, move it over once

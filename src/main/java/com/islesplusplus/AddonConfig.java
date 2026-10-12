@@ -4,6 +4,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.islesplus.logging.IslesLog;
+import com.islesplusplus.chattabs.ChatTabs;
 import com.islesplusplus.healthborder.HealthBorder;
 import com.islesplusplus.itempickup.ItemPickupLog;
 import com.islesplusplus.map.IslesMap;
@@ -39,6 +40,7 @@ public final class AddonConfig {
         IslesMap.zoom = Math.max(IslesMap.MIN_ZOOM, Math.min(IslesMap.MAX_ZOOM, num(o, "minimapZoom", 1f)));
         MapPois.split(o.has("mapHiddenPoints") ? o.get("mapHiddenPoints").getAsString() : "", MapPois.hidden);
         MapPois.split(o.has("mapShownNodes") ? o.get("mapShownNodes").getAsString() : "", MapPois.selected);
+        try { ChatTabs.load(o); } catch (Exception e) { ChatTabs.load(new JsonObject()); }
     }
 
     public static void save() {
@@ -56,6 +58,7 @@ public final class AddonConfig {
         o.addProperty("minimapZoom", IslesMap.zoom);
         o.addProperty("mapHiddenPoints", MapPois.join(MapPois.hidden));
         o.addProperty("mapShownNodes", MapPois.join(MapPois.selected));
+        ChatTabs.save(o);
         try {
             Files.createDirectories(path().getParent());
             Files.writeString(path(), new GsonBuilder().setPrettyPrinting().create().toJson(o));
