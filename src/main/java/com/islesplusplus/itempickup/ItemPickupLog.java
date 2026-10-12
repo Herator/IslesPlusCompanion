@@ -19,8 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-// "[icon] Whisperleaf x3" for each pickup. newest on top, same item stacks onto its row
-// fed from ItemPickupMixin
+// "[icon] Whisperleaf x3" per pickup, newest on top, same item stacks. fed from ItemPickupMixin
 public final class ItemPickupLog {
     public static final String KILL_KEY = "item_pickup_log";
     public static boolean enabled = true;

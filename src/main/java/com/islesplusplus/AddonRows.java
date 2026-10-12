@@ -86,6 +86,8 @@ public final class AddonRows {
                     .fixed(Fonts.width("0.25x", Fonts.SMALL) + 2 * Metrics.CHIP_PAD_X)))
             .add(new SmallToggle("Map as you explore", () -> IslesMap.generating,
                 () -> IslesMap.setGenerating(!IslesMap.generating)))
+            .add(new SmallToggle("Unroll animation", () -> ScrollDialog.unroll,
+                () -> { ScrollDialog.unroll = !ScrollDialog.unroll; IslesPlusConfig.save(); }))
             .add(new FootnoteBox("Fills the map in with the places you visit.",
                 "Saved in config/islesplusplus/map."));
         return new FeatureRow("Map", "Minimap, and the full map on M.")

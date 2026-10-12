@@ -23,6 +23,8 @@ public final class WaypointRenderer {
     static final int HIDE_WITHIN = 16;
     static final int BEAM_HIDE_WITHIN = 8;
     private static final int LABEL_ALPHA = 0xA0;
+    // a faint dark plate behind the label, like a nameplate, so it isn't loose text over the sky
+    static final int LABEL_PLATE = 0x50000000;
 
     private WaypointRenderer() {}
 
@@ -43,8 +45,7 @@ public final class WaypointRenderer {
         Camera camera = client.gameRenderer.getCamera();
         Vec3d cam = camera.getCameraPos();
         double dx = x + 0.5 - cam.x, dz = z + 0.5 - cam.z;
-        // the beam gets cut off past the render distance, so pull it in along the same line and it
-        // still shows which way to go.
+        // past render distance the beam gets cut off, so pull it in along the same line
         double max = Math.max(32, client.options.getClampedViewDistance() * 16 - 16);
         double dist = Math.sqrt(dx * dx + dz * dz);
         if (dist > max) { dx *= max / dist; dz *= max / dist; }
@@ -69,7 +70,7 @@ public final class WaypointRenderer {
         if (away > HIDE_WITHIN) {
             String label = "◆ " + (name != null ? name + " " : "") + Math.round(away) + "m";
             WorldTagRenderer.drawTag(client, m, cam, camera.getYaw(), camera.getPitch(),
-                x + 0.5, y + 1.5, z + 0.5, label, LABEL_ALPHA << 24 | rgb, 0, 1f, consumers);
+                x + 0.5, y + 1.5, z + 0.5, label, LABEL_ALPHA << 24 | rgb, LABEL_PLATE, 1f, consumers);
         }
     }
 

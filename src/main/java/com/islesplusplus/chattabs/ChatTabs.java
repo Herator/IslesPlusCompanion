@@ -3,6 +3,8 @@ package com.islesplusplus.chattabs;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.islesplus.ui.Fonts;
+import com.islesplus.ui.Theme;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenMouseEvents;
 import net.minecraft.client.MinecraftClient;
@@ -16,15 +18,14 @@ import java.util.Locale;
 
 // tabs above the chat box, each one only shows the lines that match its filter (see ChatHudMixin)
 public final class ChatTabs {
-    // filter: comma separated words, a line shows if it has any of them (or there are none)
-    // and none of the "-word" ones. case doesn't matter
+    // filter: comma separated words, a line shows if it has any (or there are none) and no -word ones
     public record Tab(String name, String filter) {}
 
     public static boolean enabled = true;
     public static final List<Tab> tabs = new ArrayList<>();
     private static int active;
 
-    private static final int H = 11, GAP = 2;
+    private static final int GAP = 2;
     private static final String EDIT = "+";
 
     private ChatTabs() {}
@@ -86,6 +87,8 @@ public final class ChatTabs {
         return enabled && active < tabs.size() && !matches(tabs.get(active).filter(), line);
     }
 
+    static int active() { return active; }
+
     public static void select(int i) {
         active = i;
         refreshChat();
@@ -118,18 +121,22 @@ public final class ChatTabs {
         return true;
     }
 
+    // just the names, no boxes: the open one gold and underlined, the rest quiet until you point at them
+    private static int h() { return Fonts.height(Fonts.BODY) + 4; }
+
     // just above the chat input box
-    private static int y(Screen screen) { return screen.height - 14 - GAP - H; }
+    private static int y(Screen screen) { return screen.height - 14 - GAP - h(); }
 
     private static String label(int i) { return i < tabs.size() ? tabs.get(i).name() : EDIT; }
 
+    private static int width(int i) { return Fonts.hudWidth(label(i)) + 6; }
+
     // the last one (i == tabs.size()) is the + button
     private static int tabAt(Screen screen, double mx, double my) {
-        if (!enabled || my < y(screen) || my >= y(screen) + H) return -1;
-        var font = MinecraftClient.getInstance().textRenderer;
+        if (!enabled || my < y(screen) || my >= y(screen) + h()) return -1;
         int x = 2;
         for (int i = 0; i <= tabs.size(); i++) {
-            int w = font.getWidth(label(i)) + 8;
+            int w = width(i);
             if (mx >= x && mx < x + w) return i;
             x += w + GAP;
         }
@@ -138,15 +145,16 @@ public final class ChatTabs {
 
     private static void draw(Screen screen, DrawContext ctx, int mx, int my) {
         if (!enabled) return;
-        var font = MinecraftClient.getInstance().textRenderer;
-        int x = 2, y = y(screen);
+        int x = 2, y = y(screen), h = h();
         for (int i = 0; i <= tabs.size(); i++) {
-            String name = label(i);
-            int w = font.getWidth(name) + 8;
-            boolean hot = mx >= x && mx < x + w && my >= y && my < y + H;
-            ctx.fill(x, y, x + w, y + H, i == active ? 0xC0000000 : hot ? 0x90000000 : 0x60000000);
-            if (i == active) ctx.fill(x, y + H - 1, x + w, y + H, 0xFFFFFFFF);
-            ctx.drawTextWithShadow(font, name, x + 4, y + 2, i == active ? 0xFFFFFFFF : 0xFFAAAAAA);
+            int w = width(i);
+            boolean on = i == active, hot = mx >= x && mx < x + w && my >= y && my < y + h;
+            int colour = on ? Theme.HUD_GOLD : hot ? Theme.HUD_TEXT : Theme.HUD_MUTED;
+            Fonts.drawHud(ctx, label(i), x + 3, y + 1, colour);
+            if (on) {
+                ctx.fill(x + 3, y + h - 1, x + w - 2, y + h, Theme.HUD_SHADOW);
+                ctx.fill(x + 2, y + h - 2, x + w - 3, y + h - 1, Theme.HUD_GOLD);
+            }
             x += w + GAP;
         }
     }

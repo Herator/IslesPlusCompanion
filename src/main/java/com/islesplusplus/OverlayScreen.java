@@ -4,6 +4,7 @@ import com.islesplus.ui.Fonts;
 import com.islesplus.ui.OverlayHost;
 import com.islesplus.ui.Theme;
 import com.islesplus.ui.Widget;
+import com.islesplusplus.map.IslesMap;
 import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
@@ -105,12 +106,25 @@ public abstract class OverlayScreen extends Screen implements OverlayHost {
 
     @Override public boolean shouldPause() { return false; }
 
+    // a widget around another one: input goes straight through to it unless overridden
+    abstract static class Wrap extends Widget {
+        protected final Widget child;
+        Wrap(Widget child) { this.child = child; }
+
+        @Override public boolean mouseClicked(double mx, double my, int button) { return child.mouseClicked(mx, my, button); }
+        @Override public boolean mouseDragged(double mx, double my) { return child.mouseDragged(mx, my); }
+        @Override public void mouseReleased() { child.mouseReleased(); }
+        @Override public boolean mouseScrolled(double mx, double my, double amount) { return child.mouseScrolled(mx, my, amount); }
+        @Override public boolean keyPressed(KeyInput in) { return child.keyPressed(in); }
+        @Override public boolean charTyped(CharInput in) { return child.charTyped(in); }
+        @Override public void unfocus() { child.unfocus(); }
+    }
+
     // scrolls when it's too long
-    protected final class Scroll extends Widget {
+    protected final class Scroll extends Wrap {
         private static final int STEP = 12;
-        private final Widget child;
         private int scroll, contentH;
-        public Scroll(Widget child) { this.child = child; }
+        public Scroll(Widget child) { super(child); }
 
         @Override public int layout(int x, int y, int width) {
             this.x = x; this.y = y; this.w = width;
@@ -142,10 +156,43 @@ public abstract class OverlayScreen extends Screen implements OverlayHost {
             scroll -= (int) Math.signum(amount) * STEP;
             return true;
         }
-        @Override public boolean mouseDragged(double mx, double my) { return child.mouseDragged(mx, my); }
-        @Override public void mouseReleased() { child.mouseReleased(); }
-        @Override public boolean keyPressed(KeyInput in) { return child.keyPressed(in); }
-        @Override public boolean charTyped(CharInput in) { return child.charTyped(in); }
-        @Override public void unfocus() { child.unfocus(); }
+    }
+
+    // a list row with no box, a carved line under it, lit under the mouse
+    protected static final class Row extends Wrap {
+        private static final int PAD_X = 3, PAD_Y = 5;
+        private static final int HOVER = 0x24FFF4D8, GROOVE = 0x50704A28, GROOVE_LIT = 0x60FFF8E8;
+        public Row(Widget child) { super(child); }
+
+        @Override public int layout(int x, int y, int width) {
+            this.x = x; this.y = y; this.w = width;
+            h = child.layout(x + PAD_X, y + PAD_Y, width - 2 * PAD_X) + 2 * PAD_Y + 2;
+            return h;
+        }
+
+        @Override public void render(DrawContext ctx, int mouseX, int mouseY) {
+            if (contains(mouseX, mouseY)) ctx.fill(x, y, x + w, y + h - 2, HOVER);
+            child.render(ctx, mouseX, mouseY);
+            ctx.fill(x, y + h - 2, x + w, y + h - 1, GROOVE);
+            ctx.fill(x, y + h - 1, x + w, y + h, GROOVE_LIT);
+        }
+    }
+
+    // a row's diamond marker, as tall as a name + meta pair so it sits in the middle
+    protected static final class Marker extends Widget {
+        private static final int W = 9;
+        private final java.util.function.IntSupplier rgb;
+        public Marker(java.util.function.IntSupplier rgb) { this.rgb = rgb; }
+
+        @Override public int prefWidth() { return W; }
+        @Override public int layout(int x, int y, int width) {
+            this.x = x; this.y = y; w = W;
+            h = Fonts.height(Fonts.BODY) + 2 + Fonts.height(Fonts.SMALL);
+            return h;
+        }
+
+        @Override public void render(DrawContext ctx, int mouseX, int mouseY) {
+            IslesMap.diamond(ctx, x + W / 2, y + h / 2, 3, 0xFF000000 | rgb.getAsInt(), Theme.INK_DEEP);
+        }
     }
 }

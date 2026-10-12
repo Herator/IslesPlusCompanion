@@ -12,8 +12,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(ClientPlayNetworkHandler.class)
 public class ItemPickupMixin {
-    // HEAD, before the item entity is removed. The handler first runs on the network thread and
-    // bounces itself to the main one, so only act on the main-thread pass.
+    // HEAD, before the entity is removed. only the main thread pass, it runs on the network thread first
     @Inject(method = "onItemPickupAnimation", at = @At("HEAD"))
     private void islesplusplus$onItemPickup(ItemPickupAnimationS2CPacket packet, CallbackInfo ci) {
         MinecraftClient client = MinecraftClient.getInstance();

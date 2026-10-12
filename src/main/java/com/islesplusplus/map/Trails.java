@@ -438,8 +438,7 @@ public final class Trails {
             if (sx < x + 2 || sx > x + w - 3 || sy < y + 2 || sy > y + h - 3) continue;
             ctx.getMatrices().pushMatrix();
             ctx.getMatrices().translate((float) ox, (float) oy);
-            ctx.fill(mx - 2, my - 2, mx + 3, my + 3, Theme.HUD_SHADOW);
-            ctx.fill(mx - 1, my - 1, mx + 2, my + 2, argb);
+            IslesMap.diamond(ctx, mx, my, 2, argb, Theme.HUD_SHADOW);
             ctx.getMatrices().popMatrix();
             int bx = (int) Math.floor(n.x()), by = (int) Math.floor(n.y()), bz = (int) Math.floor(n.z());
             drawn.add(new MapPois.Shown(() -> List.of(Text.literal(n.name()).withColor(MapPois.NAME),
@@ -482,7 +481,7 @@ public final class Trails {
         for (Node n : t.nodes) {
             if (sq(n.x() - cam.x) + sq(n.y() - cam.y) + sq(n.z() - cam.z) > LABEL_RANGE * LABEL_RANGE) continue;
             WorldTagRenderer.drawTag(client, m, cam, camera.getYaw(), camera.getPitch(),
-                n.x(), n.y(), n.z(), "● " + n.name(), 0xFF000000 | argb, 0, 1f, ctx.consumers());
+                n.x(), n.y(), n.z(), "● " + n.name(), 0xFF000000 | argb, WaypointRenderer.LABEL_PLATE, 1f, ctx.consumers());
         }
     }
 

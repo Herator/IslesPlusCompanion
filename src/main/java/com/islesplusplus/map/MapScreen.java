@@ -10,21 +10,24 @@ import com.islesplus.ui.Widget;
 import com.islesplus.ui.widgets.Button;
 import com.islesplus.ui.widgets.Label;
 import com.islesplus.ui.widgets.SmallToggle;
+import com.islesplusplus.ScrollDialog;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.input.KeyInput;
 import net.minecraft.text.Text;
+import net.minecraft.util.Util;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.List;
 
-// full map. drag = pan, scroll = zoom, middle click = temp waypoint, right click = add saved waypoint
-// clicking a point puts the waypoint on it (on a cluster: the node nearest the middle)
+// full map: drag pans, scroll zooms, middle click = temp waypoint, right click = saved waypoint
 public final class MapScreen extends Screen {
-    /** Space around the map panel. The game shows through the scrim there, same as behind the mod's other screens. */
-    private static final int MARGIN = 12;
+    // behind the map where nothing's been mapped yet: dark, so the map's colours read the way they do in game
+    private static final int UNMAPPED = 0xFF14161C;
+    /** Space around the map: a strip of the scroll's paper, then its rollers and knobs, then the game through the scrim. */
+    private static final int PAPER = 8, MARGIN = PAPER + ScrollDialog.ROLL_OUT_X + 3;
     private static final float MIN_PPB = 0.125f, MAX_PPB = 8f;
     // px
     private static final int PICK = 5;
@@ -47,6 +50,10 @@ public final class MapScreen extends Screen {
         () -> MinecraftClient.getInstance().setScreen(new WaypointsScreen(this)));
     private boolean dragOnPanel;
 
+    // unrolls from the middle when it opens, like the scrolls (not again coming back from Waypoints)
+    private static final long UNROLL_MS = 260;
+    private final long openedAt = Util.getMeasuringTimeMs();
+
     public MapScreen() {
         super(Text.literal("Map"));
     }
@@ -61,8 +68,7 @@ public final class MapScreen extends Screen {
         }
         Fonts.islesUi(() -> {
             Flow.Column col = new Flow.Column(Metrics.DRAWER_GAP).add(new Label("Show", Theme.TEXT_TITLE, Fonts.BODY));
-            // the panel grows to fit its labels, up to a third of the map (at a big GUI scale the map is only a
-            // few hundred px wide); past that a label is cut short with "..." rather than wrapping
+            // the panel fits its labels up to a third of the map, longer ones get cut with "..."
             int maxRow = Math.max(SHOW_PANEL_W, (width - 2 * MARGIN) / 3) - 2 * (SHOW_PANEL_PAD + 1);
             int widest = 0;
             for (MapPois.Group g : MapPois.Group.values()) {
@@ -168,13 +174,16 @@ public final class MapScreen extends Screen {
     @Override
     public void render(DrawContext ctx, int mouseX, int mouseY, float delta) {
         super.render(ctx, mouseX, mouseY, delta);
-        int m = MARGIN, b = IslesMap.BORDER, mw = width - 2 * m, mh = height - 2 * m;
-        IslesMap.drawFrame(ctx, m - b, m - b, width - 2 * (m - b), height - 2 * (m - b), 1f);
+        int m = MARGIN, mw = width - 2 * m, mh = height - 2 * m, sx = m - PAPER, sw = width - 2 * sx, sh = height - 2 * sx;
+        float t = ScrollDialog.progress(openedAt, UNROLL_MS);
+        ScrollDialog.sheetStart(ctx, sx, sx, sw, sh, t);
+        ctx.fill(m, m, m + mw, m + mh, UNMAPPED);
         if (!IslesMap.hasData()) {
             String s = "No map data yet.";
             Fonts.draw(ctx, s, (width - Fonts.width(s)) / 2, height / 2, Theme.HUD_TEXT);
         }
         IslesMap.drawMap(ctx, m, m, mw, mh, cx, cz, ppb);
+        ScrollDialog.fadeEdges(ctx, m, m, mw, mh, 6);
         drawn = MapPois.draw(ctx, m, m, mw, mh, cx, cz, ppb, false);
         IslesMap.drawWaypoint(ctx, m, m, mw, mh, cx, cz, ppb);
         if (client != null && client.player != null) {
@@ -182,17 +191,16 @@ public final class MapScreen extends Screen {
             int py = (int) Math.round(height / 2.0 + (client.player.getZ() - cz) * ppb);
             if (px >= m && px < width - m && py >= m && py < height - m) IslesMap.drawPlayer(ctx, px, py, client.player.getYaw());
         }
-        IslesMap.drawCompass(ctx, m, m, mw, mh);
+        // the coords label sits centred on the bottom edge, so the S goes up above it
+        IslesMap.drawCompass(ctx, m, m, mw, mh - Fonts.height(Fonts.BODY) - 5);
 
-        // the Show panel sits centred on the map's left edge with its tab on its right (or just the tab on
-        // the edge while closed).
+        // the Show panel sits centred on the map's left edge, its tab on its right
         int midY = m + mh / 2;
         if (panelOpen) {
             Fonts.islesUi(() -> {
                 int pad = SHOW_PANEL_PAD, innerW = showPanelW - 2 * pad;
                 int contentH = showContent.layout(0, 0, innerW) + 2 * pad;
-                // no taller than the map less a gap at the top and bottom; what doesn't fit scrolls
-                // (a big GUI scale with a list open)
+                // at most the map height less a gap, the rest scrolls
                 boxH = Math.min(contentH, mh - 2 * SHOW_PANEL_GAP);
                 showScroll = Math.max(0, Math.min(showScroll, contentH - boxH));
                 boxX = m + SHOW_PANEL_GAP;
@@ -217,13 +225,13 @@ public final class MapScreen extends Screen {
         Draw.caret(ctx, tabX + TAB_W / 2, midY, panelOpen ? Draw.Dir.LEFT : Draw.Dir.RIGHT,
             onTab(mouseX, mouseY) ? Theme.TEXT_STRONG : Theme.TEXT_TITLE);
 
-        // coords under cursor
+        // coords under cursor, on a parchment label centred on the bottom of the map
         int[] under = blockAt(mouseX, mouseY);
         String text = under[0] + ", " + under[1];
-        int pw = Fonts.width(text) + 14, ph = Fonts.height(Fonts.BODY) + 10;
-        int plx = (width - pw) / 2, ply = height - m - ph - 6;
-        IslesMap.panel(ctx, plx, ply, pw, ph, 1f);
-        Fonts.draw(ctx, text, plx + 7, ply + 5, Theme.HUD_TEXT);
+        int pw = Fonts.width(text) + 14, ph = Fonts.height(Fonts.BODY) + 8;
+        int plx = (width - pw) / 2, ply = height - m - ph + 3;
+        Draw.bevel(ctx, plx, ply, pw, ph, Theme.SURFACE, Theme.SURFACE_LIT, Theme.SURFACE_SHADE, Theme.SURFACE_RING);
+        Fonts.draw(ctx, text, plx + 7, ply + 4, Theme.TEXT_STRONG);
 
         Fonts.islesUi(() -> {
             waypointsButton.layout(width - m - waypointsButton.prefWidth() - 6, m + 6, waypointsButton.prefWidth());
@@ -231,6 +239,7 @@ public final class MapScreen extends Screen {
         });
 
         // hovered point's tooltip, drawn the same way the game draws its own
+        ScrollDialog.sheetEnd(ctx, sx, sx, sw, sh, t);
         MapPois.Shown hover = hovered(mouseX, mouseY);
         if (hover != null) ctx.drawTooltip(textRenderer, hover.tooltip().get(), mouseX, mouseY);
     }

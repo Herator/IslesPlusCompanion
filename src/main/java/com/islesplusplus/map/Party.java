@@ -42,8 +42,7 @@ public final class Party {
         members = Set.copyOf(party);
     }
 
-    /** The member's name off a party row ("P » [unknown player head] chrrisk ❤126" -> "chrrisk"),
-     * or null. It's the first word after the » that could be a Minecraft name, skipping [bracketed] bits. */
+    /** The name off a party row ("P » [head] chrrisk ❤126" -> "chrrisk"), or null. */
     static String memberName(String line) {
         if (!line.matches("^P\\s*».*")) return null;
         int at = line.indexOf('»');

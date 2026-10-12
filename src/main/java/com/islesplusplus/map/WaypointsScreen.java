@@ -2,7 +2,6 @@ package com.islesplusplus.map;
 
 import com.islesplus.screen.islesscreen.rows.GlowColorDrawer;
 import com.islesplus.ui.ColorMath;
-import com.islesplus.ui.Draw;
 import com.islesplus.ui.Flow;
 import com.islesplus.ui.Fonts;
 import com.islesplus.ui.Metrics;
@@ -10,17 +9,14 @@ import com.islesplus.ui.Theme;
 import com.islesplus.ui.Widget;
 import com.islesplus.ui.widgets.Button;
 import com.islesplus.ui.widgets.ConfirmDialog;
-import com.islesplus.ui.widgets.Dialog;
 import com.islesplus.ui.widgets.EmptyBox;
 import com.islesplus.ui.widgets.Label;
-import com.islesplus.ui.widgets.Panel;
 import com.islesplus.ui.widgets.SmallToggle;
 import com.islesplus.ui.widgets.TextField;
 import com.islesplusplus.OverlayScreen;
+import com.islesplusplus.ScrollDialog;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
-
-import java.util.function.IntSupplier;
 
 // list of saved waypoints. adding() opens just the add dialog (right click on the full map)
 public final class WaypointsScreen extends OverlayScreen {
@@ -28,7 +24,9 @@ public final class WaypointsScreen extends OverlayScreen {
 
     // null = show the list
     private final int[] addAt;
-    private final Flow.Column list = new Flow.Column(ROW_GAP);
+    private final Flow.Column list = new Flow.Column(0);   // the rows bring their own dividers
+    // opened from the full map: the map stays drawn behind the dialogs. from a key or command: null
+    private final MapScreen map;
 
     public WaypointsScreen(Screen parent) {
         this(parent, null);
@@ -37,6 +35,7 @@ public final class WaypointsScreen extends OverlayScreen {
     private WaypointsScreen(Screen parent, int[] addAt) {
         super("Waypoints", parent);
         this.addAt = addAt;
+        this.map = parent instanceof MapScreen m ? m : null;
     }
 
     public static WaypointsScreen adding(Screen parent, int x, int y, int z) {
@@ -45,6 +44,7 @@ public final class WaypointsScreen extends OverlayScreen {
 
     @Override
     protected void init() {
+        if (map != null) map.resize(width, height);
         if (hasOverlays()) return;   // a window resize runs init again; keep what's open
         if (addAt != null) {
             edit(null);
@@ -55,7 +55,13 @@ public final class WaypointsScreen extends OverlayScreen {
             .add(new Flow.WrapRow(ROW_GAP, ROW_GAP)
                 .add(new Button("Add waypoint", Button.Kind.PRIMARY, () -> edit(null)).plus()))
             .add(new Scroll(list));
-        openOverlay(new Dialog(this, "Waypoints", body, null).width(LIST_W));
+        openOverlay(new ScrollDialog(this, "Waypoints", body).width(LIST_W));
+    }
+
+    @Override
+    public void render(DrawContext ctx, int mouseX, int mouseY, float delta) {
+        if (map != null) map.render(ctx, -1, -1, delta);
+        super.render(ctx, mouseX, mouseY, delta);
     }
 
     private void rebuild() {
@@ -66,7 +72,7 @@ public final class WaypointsScreen extends OverlayScreen {
 
     private Widget row(SavedWaypoints.Waypoint w) {
         Widget body = new Flow.WrapRow(ROW_GAP, ROW_GAP)
-            .add(new Swatch(() -> w.color))
+            .add(new Marker(() -> w.color))
             .add(new NameLines(w))
             .add(new Button("Hide", Button.Kind.SECONDARY, () -> {
                 w.inWorld = !w.inWorld;
@@ -78,7 +84,7 @@ public final class WaypointsScreen extends OverlayScreen {
                     SavedWaypoints.remove(w);
                     rebuild();
                 })).small());
-        return new Panel(body, 5, Theme.SURFACE, Theme.RAISED, Theme.SECONDARY, Theme.SURFACE_RING);
+        return new Row(body);
     }
 
     // works on a copy, nothing changes until Save
@@ -140,7 +146,7 @@ public final class WaypointsScreen extends OverlayScreen {
                     closeOverlay(dialogRef[0]);
                 }).fill()));
 
-        Dialog dialog = new Dialog(this, existing != null ? "Edit waypoint" : "Add waypoint", body, null).width(LIST_W);
+        ScrollDialog dialog = new ScrollDialog(this, existing != null ? "Edit waypoint" : "Add waypoint", body).width(LIST_W);
         dialogRef[0] = dialog;
         openOverlay(dialog);
     }
@@ -157,18 +163,6 @@ public final class WaypointsScreen extends OverlayScreen {
         return new TextField(() -> xyz[i], v -> xyz[i] = v, "0", 9) {
             @Override protected boolean acceptChar(char c) { return c == '-' || c >= '0' && c <= '9'; }
         };
-    }
-
-    private static final class Swatch extends Widget {
-        private static final int SIZE = 10;
-        private final IntSupplier rgb;
-        Swatch(IntSupplier rgb) { this.rgb = rgb; }
-        @Override public int prefWidth() { return SIZE; }
-        @Override public int layout(int x, int y, int width) { this.x = x; this.y = y; w = SIZE; h = SIZE; return h; }
-        @Override public void render(DrawContext ctx, int mouseX, int mouseY) {
-            ctx.fill(x, y, x + w, y + h, 0xFF000000 | rgb.getAsInt());
-            Draw.ring(ctx, x, y, w, h, Theme.INK_DEEP);
-        }
     }
 
     private static final class NameLines extends Widget {

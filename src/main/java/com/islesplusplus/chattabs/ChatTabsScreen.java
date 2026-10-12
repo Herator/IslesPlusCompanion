@@ -8,13 +8,12 @@ import com.islesplus.ui.Theme;
 import com.islesplus.ui.Widget;
 import com.islesplus.ui.widgets.Button;
 import com.islesplus.ui.widgets.ConfirmDialog;
-import com.islesplus.ui.widgets.Dialog;
 import com.islesplus.ui.widgets.EmptyBox;
 import com.islesplus.ui.widgets.FootnoteBox;
 import com.islesplus.ui.widgets.Label;
-import com.islesplus.ui.widgets.Panel;
 import com.islesplus.ui.widgets.TextField;
 import com.islesplusplus.OverlayScreen;
+import com.islesplusplus.ScrollDialog;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 
@@ -22,7 +21,7 @@ import net.minecraft.client.gui.screen.Screen;
 public final class ChatTabsScreen extends OverlayScreen {
     private static final int LIST_W = 300, ROW_GAP = 4;
 
-    private final Flow.Column list = new Flow.Column(ROW_GAP);
+    private final Flow.Column list = new Flow.Column(0);   // the rows bring their own dividers
     // null = show the list, -1 = add a tab, else the tab to edit
     private final Integer only;
 
@@ -51,7 +50,7 @@ public final class ChatTabsScreen extends OverlayScreen {
             .add(new Flow.WrapRow(ROW_GAP, ROW_GAP)
                 .add(new Button("Add tab", Button.Kind.PRIMARY, () -> edit(-1)).plus()))
             .add(new Scroll(list));
-        openOverlay(new Dialog(this, "Chat Tabs", body, null).width(LIST_W));
+        openOverlay(new ScrollDialog(this, "Chat Tabs", body).width(LIST_W));
     }
 
     private void changed() {
@@ -68,7 +67,7 @@ public final class ChatTabsScreen extends OverlayScreen {
 
     private Widget row(int i) {
         ChatTabs.Tab tab = ChatTabs.tabs.get(i);
-        Flow.WrapRow body = new Flow.WrapRow(ROW_GAP, ROW_GAP).add(new TabLines(tab));
+        Flow.WrapRow body = new Flow.WrapRow(ROW_GAP, ROW_GAP).add(new Marker(() -> ChatTabs.active() == i ? Theme.OXBLOOD : Theme.RIVET_OFF)).add(new TabLines(tab));
         if (i > 0) body.add(new Button("Up", Button.Kind.SECONDARY, () -> {
             ChatTabs.tabs.add(i - 1, ChatTabs.tabs.remove(i));
             changed();
@@ -79,7 +78,7 @@ public final class ChatTabsScreen extends OverlayScreen {
                     ChatTabs.tabs.remove(tab);
                     changed();
                 })).small());
-        return new Panel(body, 5, Theme.SURFACE, Theme.RAISED, Theme.SECONDARY, Theme.SURFACE_RING);
+        return new Row(body);
     }
 
     // -1 = new tab. works on a copy, nothing changes until Save
@@ -118,7 +117,7 @@ public final class ChatTabsScreen extends OverlayScreen {
                     closeOverlay(dialogRef[0]);
                 }).fill()));
 
-        Dialog dialog = new Dialog(this, existing != null ? "Edit tab" : "Add tab", body, null).width(LIST_W);
+        ScrollDialog dialog = new ScrollDialog(this, existing != null ? "Edit tab" : "Add tab", body).width(LIST_W);
         dialogRef[0] = dialog;
         openOverlay(dialog);
     }

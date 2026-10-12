@@ -39,21 +39,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Stream;
 
-/**
- * The Isles map. It's a top-down picture, one pixel per block, cut into {@value #TILE}-block square
- * PNG tiles named {@code <tileX>_<tileZ>.png}. Players start with the tiles shipped in the jar
- * ({@code assets/islesplusplus/map/}).
- *
- * <p>While {@link #generating} is on (it is by default, there's a setting for it), every loaded column's
- * top block is drawn in its vanilla map colour, so the map fills in as you explore. Only the blocks
- * you explored are saved, into tiles under {@code config/islesplusplus/map/} that are see-through
- * everywhere else; they're drawn over the shipped tiles, so a newer shipped map still shows wherever
- * you haven't been. Copy those tiles into the assets folder to ship them.
- *
- * <p>Each explored block's height goes in a matching tile under {@code heights/} (16 bits a pixel in red and
- * green, see {@link #encodeHeight}), so a waypoint clicked anywhere on the map can stand on the ground there.
- * Those ship the same way, from {@code assets/islesplusplus/map/heights/}.
- */
+/** The Isles map, one pixel per block in {@value #TILE}-block png tiles. explored blocks and heights save to config, drawn over the shipped ones. */
 public final class IslesMap {
     public static final String KILL_KEY = "map";
 
@@ -245,8 +231,7 @@ public final class IslesMap {
 
     public static void save() { save(false); }
 
-    // copy on the game thread (fast), write the pngs in the background (slow)
-    // wait = block until it's on disk, used when the game closes
+    // copy on the game thread, write the pngs in the background. wait = block until written (game closing)
     public static void save(boolean wait) {
         saveTimer = 0;
         MapPois.save();
@@ -361,9 +346,7 @@ public final class IslesMap {
         tile.stale = tile.unsaved = true;
     }
 
-    /** One above the top block the map shows at block (bx, bz), so a waypoint there stands on it: the block
-     * itself when its chunk is loaded, else the height the map saved there. {@code fallback} if neither is
-     * known (never explored since heights were added) or it's void. */
+    /** One above the top block at (bx, bz): live if its chunk is loaded, else the saved height, else {@code fallback}. */
     public static int groundY(int bx, int bz, int fallback) {
         ClientWorld world = MinecraftClient.getInstance().world;
         WorldChunk chunk = world == null ? null : loadedChunk(world, bx >> 4, bz >> 4);
@@ -452,8 +435,7 @@ public final class IslesMap {
         return Math.abs(sx - mx) <= px && Math.abs(sy - my) <= px;
     }
 
-    /** Where a marker {@code (dx, dy)} from a box's centre gets drawn. Right there if it's within
-     * {@code halfW} x {@code halfH}, otherwise where the line out to it crosses the box's edge. */
+    /** Where a marker (dx, dy) from a box's centre gets drawn: right there, or where it crosses the box's edge. */
     static int[] edgePoint(double dx, double dy, double halfW, double halfH) {
         if (Math.abs(dx) <= halfW && Math.abs(dy) <= halfH) return new int[]{(int) Math.round(dx), (int) Math.round(dy), 1};
         double t = Math.min(dx == 0 ? Double.MAX_VALUE : halfW / Math.abs(dx), dy == 0 ? Double.MAX_VALUE : halfH / Math.abs(dy));
@@ -466,22 +448,17 @@ public final class IslesMap {
         int pad = 4;
         int[] p = edgePoint((wp.x() + 0.5 - cx) * ppb, (wp.z() + 0.5 - cz) * ppb, w / 2.0 - pad, h / 2.0 - pad);
         int mx = x + w / 2 + p[0], my = y + h / 2 + p[1];
-        if (p[2] == 1) {
-            diamond(ctx, mx, my, Theme.HUD_RED);
-        } else {
-            ctx.fill(mx - 2, my - 2, mx + 3, my + 3, Theme.HUD_SHADOW);
-            ctx.fill(mx - 1, my - 1, mx + 2, my + 2, Theme.HUD_RED);
-        }
+        diamond(ctx, mx, my, p[2] == 1 ? 3 : 2, Theme.HUD_RED, Theme.HUD_SHADOW);
     }
 
-    static void diamond(DrawContext ctx, int cx, int cy, int argb) {
+    // a diamond of radius r with a 1px outline: map markers, off-map waypoints and path nodes, row markers
+    public static void diamond(DrawContext ctx, int cx, int cy, int r, int argb, int outline) {
         for (int pass = 0; pass < 2; pass++) {
-            int grow = pass == 0 ? 1 : 0, colour = pass == 0 ? Theme.HUD_SHADOW : argb;
-            for (int i = -3; i <= 3; i++) {
-                int half = 3 - Math.abs(i) + grow;
+            int grow = pass == 0 ? 1 : 0, colour = pass == 0 ? outline : argb;
+            for (int i = -r - grow; i <= r + grow; i++) {
+                int half = r + grow - Math.abs(i);
                 ctx.fill(cx - half, cy + i, cx + half + 1, cy + i + 1, colour);
             }
-            ctx.fill(cx, cy - 3 - grow, cx + 1, cy + 4 + grow, colour);
         }
     }
 
@@ -509,12 +486,30 @@ public final class IslesMap {
         ctx.getMatrices().popMatrix();
     }
 
+    // N in gold so it stands out, the other three quiet so they don't fight the map
     static void drawCompass(DrawContext ctx, int x, int y, int w, int h) {
         int th = Fonts.height(Fonts.SMALL), pad = 3;
         Fonts.drawHud(ctx, "N", x + (w - Fonts.hudWidth("N", Fonts.SMALL)) / 2, y + pad, Theme.HUD_GOLD, Fonts.SMALL);
-        Fonts.drawHud(ctx, "S", x + (w - Fonts.hudWidth("S", Fonts.SMALL)) / 2, y + h - th - pad, Theme.HUD_TEXT, Fonts.SMALL);
-        Fonts.drawHud(ctx, "W", x + pad, y + (h - th) / 2, Theme.HUD_TEXT, Fonts.SMALL);
-        Fonts.drawHud(ctx, "E", x + w - Fonts.hudWidth("E", Fonts.SMALL) - pad, y + (h - th) / 2, Theme.HUD_TEXT, Fonts.SMALL);
+        Fonts.drawHud(ctx, "S", x + (w - Fonts.hudWidth("S", Fonts.SMALL)) / 2, y + h - th - pad, Theme.HUD_MUTED, Fonts.SMALL);
+        Fonts.drawHud(ctx, "W", x + pad, y + (h - th) / 2, Theme.HUD_MUTED, Fonts.SMALL);
+        Fonts.drawHud(ctx, "E", x + w - Fonts.hudWidth("E", Fonts.SMALL) - pad, y + (h - th) / 2, Theme.HUD_MUTED, Fonts.SMALL);
+    }
+
+    // rounds off the map window's corners with a 3px bevel once the map is drawn
+    private static final int[][] CORNER_FILL = {{0, 0}, {1, 0}, {0, 1}, {0, -1}, {1, -1}, {-1, 0}, {-1, 1}};
+    private static final int[][] CORNER_RING = {{2, 0}, {1, 1}, {0, 2}};
+
+    static void roundCorners(DrawContext ctx, int x, int y, int w, int h) {
+        for (int c = 0; c < 4; c++) {
+            boolean right = (c & 1) == 1, bottom = c >= 2;
+            for (int[] p : CORNER_FILL) cornerPixel(ctx, x, y, w, h, right, bottom, p, Theme.SURFACE);
+            for (int[] p : CORNER_RING) cornerPixel(ctx, x, y, w, h, right, bottom, p, Theme.SURFACE_RING);
+        }
+    }
+
+    private static void cornerPixel(DrawContext ctx, int x, int y, int w, int h, boolean right, boolean bottom, int[] p, int colour) {
+        int px = right ? x + w - 1 - p[0] : x + p[0], py = bottom ? y + h - 1 - p[1] : y + p[1];
+        ctx.fill(px, py, px + 1, py + 1, colour);
     }
 
     // the World Bosses panel colours (Isles+ BossTimerHud), so the maps match the other HUD panels
@@ -575,6 +570,7 @@ public final class IslesMap {
                 drawWaypoint(ctx, b, b, in, in, player.getX(), player.getZ(), zoom);
                 drawPlayer(ctx, s / 2, s / 2, player.getYaw());
             }
+            roundCorners(ctx, b, b, in, in);
             drawCompass(ctx, b, b, in, in);
         }
     };

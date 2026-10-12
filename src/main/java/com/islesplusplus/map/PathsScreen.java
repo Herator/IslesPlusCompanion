@@ -7,12 +7,11 @@ import com.islesplus.ui.Theme;
 import com.islesplus.ui.Widget;
 import com.islesplus.ui.widgets.Button;
 import com.islesplus.ui.widgets.ConfirmDialog;
-import com.islesplus.ui.widgets.Dialog;
 import com.islesplus.ui.widgets.EmptyBox;
 import com.islesplus.ui.widgets.Label;
-import com.islesplus.ui.widgets.Panel;
 import com.islesplus.ui.widgets.TextField;
 import com.islesplusplus.OverlayScreen;
+import com.islesplusplus.ScrollDialog;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.network.ClientPlayerEntity;
@@ -22,12 +21,12 @@ import java.util.function.Function;
 
 import static com.islesplus.IslesClient.sendInfoMessage;
 
-// /path with nothing after it: record, start/stop and delete paths
+// /path with nothing after it: record, start/stop, rename and delete paths
 public final class PathsScreen extends OverlayScreen {
     private static final int LIST_W = 300, ROW_GAP = 4;
 
     private final Flow.Column top = new Flow.Column(ROW_GAP);
-    private final Flow.Column list = new Flow.Column(ROW_GAP);
+    private final Flow.Column list = new Flow.Column(0);   // the rows bring their own dividers
 
     public PathsScreen(Screen parent) {
         super("Paths", parent);
@@ -38,7 +37,7 @@ public final class PathsScreen extends OverlayScreen {
         if (hasOverlays()) return;   // a window resize runs init again; keep what's open
         rebuild();
         Widget body = new Flow.Column(Metrics.DRAWER_GAP).add(top).add(new Scroll(list));
-        openOverlay(new Dialog(this, "Paths", body, null).width(LIST_W));
+        openOverlay(new ScrollDialog(this, "Paths", body).width(LIST_W));
     }
 
     // runs a Trails command with the player and says what happened in chat, like the /path one would
@@ -75,7 +74,7 @@ public final class PathsScreen extends OverlayScreen {
 
     private Widget row(Trails.Trail t) {
         boolean started = t == Trails.active();
-        Flow.WrapRow body = new Flow.WrapRow(ROW_GAP, ROW_GAP).add(new PathLines(t, started));
+        Flow.WrapRow body = new Flow.WrapRow(ROW_GAP, ROW_GAP).add(new Marker(() -> started ? Theme.HUD_VERDIGRIS : Theme.RIVET_OFF)).add(new PathLines(t, started));
         body.add(started
                 ? new Button("Stop", Button.Kind.SECONDARY, () -> run(p -> Trails.stop(), false)).small()
                 : new Button("Start", Button.Kind.PRIMARY, () -> run(p -> Trails.start(t.name), false)).small())
@@ -83,7 +82,7 @@ public final class PathsScreen extends OverlayScreen {
                 name -> Trails.rename(t, name), false)).small())
             .add(new Button("Delete", Button.Kind.QUIET, () -> ConfirmDialog.open(this, "Delete path",
                 "Delete " + t.name + "?", "Delete", () -> run(p -> Trails.delete(t.name), false))).small());
-        return new Panel(body, 5, Theme.SURFACE, Theme.RAISED, Theme.SECONDARY, Theme.SURFACE_RING);
+        return new Row(body);
     }
 
     // a name prompt; blank uses the placeholder
@@ -101,7 +100,7 @@ public final class PathsScreen extends OverlayScreen {
             .add(new Flow.WrapRow(ROW_GAP, ROW_GAP)
                 .add(new Button("Cancel", Button.Kind.QUIET, () -> closeOverlay(dialogRef[0])).fill())
                 .add(new Button("OK", Button.Kind.PRIMARY, ok).fill()));
-        Dialog dialog = new Dialog(this, title, body, null).width(LIST_W);
+        ScrollDialog dialog = new ScrollDialog(this, title, body).width(LIST_W);
         dialogRef[0] = dialog;
         openOverlay(dialog);
         field.focus();

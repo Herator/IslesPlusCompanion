@@ -42,22 +42,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 
-/**
- * Premade points on the minimap and full map, kept in a points file (written by hand or with
- * {@code /poi record}), plus the players around you.
- *
- * <p>The file is {@code config/islesplusplus/map/pois.json} when it exists, else the one shipped in the
- * jar ({@code assets/islesplusplus/map/pois.json}); {@code /poi reload} reads it again. Each point:
- * <pre>{"group": "WOODCUTTING", "type": "Oak Tree", "x": 0, "y": 64, "z": 0}
- * {"group": "MINING", "type": "Coal Deposit", "x": 0, "y": 64, "z": 0}
- * {"group": "POIS", "type": "Boss Beacon", "name": "Frog Boss", "icon": "boss_frog", "x": 0, "y": 64, "z": 0}</pre>
- * The type is whatever the node calls itself (each profession gets a toggle per type). {@code name} (hover text)
- * defaults to it. Icon names are lowercase with _ for spaces, looked up in {@link #PACK_ICONS}.
- * It tries the point's {@code icon} first, then its type's ({@code coal_deposit}, {@code oak_tree}), then
- * its group's ({@code mining}), and falls back to a square in the group's colour. A cluster of several types
- * uses its profession's icon, and a cluster mixing professions shows all four profession icons
- * in a grid. Players show up as their own head.
- */
+/** Premade map points from pois.json (config, else the jar's) plus players around you. icon: the point's, its type's, then its group's. */
 public final class MapPois {
     public enum Group {
         POIS("POIs", Theme.HUD_VOID, null),
@@ -187,10 +172,7 @@ public final class MapPois {
 
     static final String PLUSHIE = "plushies";
 
-    /** Plushies you haven't found yet, the same ones the Plushie Finder points at (so #1 is left out
-     * when the finder hides it). These come live from the finder, never from the points file, so a
-     * plushie drops off the map the moment you find it. Each one maps to where clicking it sends the
-     * waypoint: its entrance when it has one (it's usually tucked away inside something), else itself. */
+    /** Unfound plushies from the Plushie Finder, each mapped to where clicking it points (its entrance if it has one). */
     static Map<Poi, int[]> plushies(List<PlushieEntry> all, java.util.function.IntPredicate owned, boolean hideFirst) {
         Map<Poi, int[]> out = new LinkedHashMap<>();
         for (PlushieEntry p : all) {
@@ -205,9 +187,7 @@ public final class MapPois {
 
     private static int block(double v) { return (int) Math.floor(v); }
 
-    // ==============================
-    // Recording (dev tool)
-    // ==============================
+    // --- recording (dev tool) ---
 
     // dev tool, /poi record
     public static boolean recording = false;
@@ -222,9 +202,7 @@ public final class MapPois {
     private static final java.util.regex.Pattern NODE_NAME = java.util.regex.Pattern.compile("(?m)^\\s*(?:\\[[^\\]]*\\]\\s*)*\\d+x\\s+(.+?)\\s*$");
     private static final java.util.regex.Pattern WAYSTONE = java.util.regex.Pattern.compile("^(.+?) Waystone\\b");
 
-    /** The text of a floating label. That's a text display's text, an NPC's name (NPCs are player
-     * entities that aren't real players, like the bank, auction house, zookeeper...), or a named
-     * entity's name (an invisible armor stand), else null. */
+    /** A floating label's text: a text display, an NPC's name or a named entity's name, else null. */
     public static String labelText(net.minecraft.entity.Entity e) {
         try {
             if (e instanceof net.minecraft.entity.decoration.DisplayEntity.TextDisplayEntity td) return td.getText().getString();
@@ -237,8 +215,7 @@ public final class MapPois {
         return null;
     }
 
-    /** The longest of {@code names} in the text, so a variant wins over the name inside it
-     * ("Warm Beach Fishing Spot" over "Beach Fishing Spot", likewise a "Cold ..." one). */
+    /** The longest of {@code names} in the text, so "Warm Beach Fishing Spot" beats "Beach Fishing Spot". */
     static String matchKnownNodeName(String normalizedText, List<String> names) {
         String best = null;
         for (String nodeName : names) {
@@ -257,10 +234,7 @@ public final class MapPois {
         String normalized = com.islesplus.features.nodealertmanager.NodeTracker.normalizeNodeText(text);
         com.islesplus.entity.NodeSkill skill = com.islesplus.entity.NodeSkill.fromLabel(normalized);
         if (skill != null) {
-            // the label's own "<amount>x <name>" line ("Rich / 45x Swamp Pond Fishing Spot / 4 Fishing Power"),
-            // so a kind of node nobody has listed yet still gets its full name; record() then writes a known
-            // one the server's way ("Iron Ore Deposit" is "iron ore"). A label without that line ("Depleted
-            // Oak Tree") falls back to the longest known node name in it.
+            // the label's "<amount>x <name>" line, else the longest known node name in it
             java.util.regex.Matcher named = NODE_NAME.matcher(text);
             String node = named.find() ? named.group(1)
                 : matchKnownNodeName(normalized, com.islesplus.features.nodealertmanager.NodeRepository.getNodeNames());
@@ -269,8 +243,7 @@ public final class MapPois {
         }
         String lower = first.toLowerCase(Locale.ROOT);
         if (lower.contains(" station")) return new Poi(Group.STATIONS, lower.replace(" station", "").replace(" - ", " ").trim(), x, y, z);
-        // NPCs: the name over one is really an invisible armor stand ("Merchant", with "CLICK ME" under it).
-        // "Merchant" and "Bank Manager" have been checked in game. Whole words only, so "Riverbank" isn't a bank.
+        // NPC names are invisible armor stands ("Merchant"). whole words, so "Riverbank" isn't a bank
         List<String> words = List.of(lower.split("[^a-z]+"));
         for (String[] npc : NPC_STATIONS) if (words.contains(npc[0])) return new Poi(Group.STATIONS, npc[1], x, y, z);
         return null;
@@ -283,7 +256,7 @@ public final class MapPois {
             add(c);
             return true;
         }
-        // already there (say it was added by hand where you stood), so move it onto the label but keep its name and icon
+        // already there: move it onto the label, keep its name and icon
         if (o.x() != c.x() || o.y() != c.y() || o.z() != c.z()) {
             pois.set(pois.indexOf(o), new Poi(o.group(), o.type(), o.name(), o.icon(), c.x(), c.y(), c.z()));
             unsaved = true;
@@ -348,9 +321,7 @@ public final class MapPois {
 
     private static String abbreviate(String s, int max) { return s.length() <= max ? s : s.substring(0, max) + "..."; }
 
-    // ==============================
-    // The points file
-    // ==============================
+    // --- the points file ---
 
     public static void add(Poi p) {
         ensureLoaded();
@@ -358,16 +329,10 @@ public final class MapPois {
         unsaved = true;
     }
 
-    /** Endings the same node is written with: "iron ore deposit", "coal ore", "wishing well
-     * fishing spot", "oak tree"... */
+    /** Endings the same node is written with ("iron ore deposit", "coal ore", "oak tree"...). */
     private static final List<String> ENDINGS = List.of(" deposit", " ore", " fishing spot", " tree", " field", " node");
 
-    /**
-     * A node type written the server's way, so the same node always ends up as one type with one toggle.
-     * Matches {@code known} names (the server's node list) with or without an ending, or by their
-     * first words ("iron" is "Iron Ore", "pond" is "Pond Fishing Spot"). Returns lowercase. A type that's
-     * not a known node is left as it is.
-     */
+    /** A node type the server's way, lowercase, so one node is one type with one toggle. Unknown ones stay as they are. */
     static String canonical(String type, List<String> known) {
         String t = type.trim().toLowerCase(Locale.ROOT);
         List<String> tries = new ArrayList<>(List.of(t));
@@ -448,8 +413,7 @@ public final class MapPois {
         }
     }
 
-    /** Reads the points, writing each node type the server's way and dropping duplicates. Your own
-     * file is saved again if that changed it, so it reads the same way every time. */
+    /** Reads the points, fixing up types and dropping duplicates. Saves your file again if that changed it. */
     static void read(JsonElement json, boolean local) {
         boolean changed = false;
         for (JsonElement el : json.getAsJsonObject().getAsJsonArray("pois")) {
@@ -518,18 +482,14 @@ public final class MapPois {
         for (String part : s.split("\\|")) if (!part.isBlank()) into.add(part.trim());
     }
 
-    // ==============================
-    // Drawing
-    // ==============================
+    // --- drawing ---
 
     // "Tin Ore" -> "tin_ore"
     static String slug(String s) {
         return s.trim().toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9]+", "_").replaceAll("^_|_$", "");
     }
 
-    /** The icon names a type might have. Its own name, or for a short name the game's full one
-     * ("Coal" finds coal_deposit.png, "Copper" copper_ore_deposit.png, "Oak" oak_tree.png,
-     * "Wheat" wheat_field.png, "Pond" pond_fishing_spot.png, "Smithing" smithing_station.png). */
+    /** Icon names a type might have: its own, or the full name for a short one ("Coal" -> coal_deposit). */
     static List<String> typeIcons(String type) {
         return typeIcons.computeIfAbsent(type, k -> {
             String t = slug(k);
@@ -623,7 +583,7 @@ public final class MapPois {
         Map.entry("boss_reaper", "isles:textures/custom/ui_item/mob_icons/boss_reaper.png"),
         Map.entry("boss_turtle", "isles:textures/custom/ui_item/mob_icons/boss_turtle.png"));
 
-    // (u, v, rw, rh) = box around the visible pixels so 16px and 32px icons with different margins come out the same size
+    // (u, v, rw, rh) = box around the visible pixels, so icons with different margins come out the same size
     private record Icon(Identifier id, int w, int h, int u, int v, int rw, int rh) {}
 
     private static final Map<List<String>, Optional<Icon>> icons = new HashMap<>();
@@ -658,7 +618,7 @@ public final class MapPois {
 
     public static void drawIcon(DrawContext ctx, Group g, String resource, int cx, int cy) {
         if (g == Group.WAYPOINTS) {
-            IslesMap.diamond(ctx, cx, cy, g.colour);
+            IslesMap.diamond(ctx, cx, cy, 3, g.colour, Theme.HUD_SHADOW);
             return;
         }
         List<String> names = new ArrayList<>();
@@ -752,11 +712,7 @@ public final class MapPois {
             Text.empty(), Text.literal("Click to navigate!").withColor(NAVIGATE));
     }
 
-    /**
-     * A node or cluster's tooltip, laid out like the game's. A "14x Mining Node" header per profession, then
-     * " 3x Iron Ore Deposit" per type (its last word in the profession's colour), then a blank line,
-     * then "Click to navigate!".
-     */
+    /** A node or cluster's tooltip, laid out like the game's. */
     static List<Text> nodeTooltip(List<Poi> nodes) {
         Map<Group, Map<String, Integer>> byGroup = new java.util.EnumMap<>(Group.class);
         for (Poi p : nodes) byGroup.computeIfAbsent(p.group(), g -> new LinkedHashMap<>()).merge(p.type(), 1, Integer::sum);
@@ -781,11 +737,7 @@ public final class MapPois {
         return lines;
     }
 
-    /**
-     * The icons to try for a cluster. If it's all one type, that resource's own icon
-     * ("copper_ore_deposit.png"). Several types of one profession get the profession's icon
-     * ("mining.png"), and mixed professions get {@link #PROFESSIONS}, the four profession icons in a grid.
-     */
+    /** Icons to try for a cluster: the type's own, its profession's, or all four for mixed professions. */
     static List<String> clusterIcon(List<Poi> nodes) {
         Group g = nodes.get(0).group();
         if (nodes.stream().anyMatch(p -> p.group() != g)) return List.of(PROFESSIONS);
@@ -803,8 +755,7 @@ public final class MapPois {
     // on screen px, zooming in splits them up
     static final int CLUSTER_PX = 32;
 
-    /** The grid cell a block falls in at this zoom. The grid is fixed to the world, not the
-     * screen, so clusters don't change when you just pan the map. */
+    /** The grid cell a block falls in at this zoom. fixed to the world, so panning doesn't change clusters. */
     static long cell(double bx, double bz, float ppb) {
         long cx = (long) Math.floor(bx * ppb / CLUSTER_PX), cz = (long) Math.floor(bz * ppb / CLUSTER_PX);
         return cx << 32 | (cz & 0xFFFFFFFFL);
@@ -841,7 +792,7 @@ public final class MapPois {
             for (SavedWaypoints.Waypoint wp : SavedWaypoints.all()) {
                 int[] s = onMap(wp.x + 0.5, wp.z + 0.5, x, y, w, h, cx, cz, ppb);
                 if (s == null) continue;
-                IslesMap.diamond(ctx, s[0], s[1], 0xFF000000 | wp.color);
+                IslesMap.diamond(ctx, s[0], s[1], 3, 0xFF000000 | wp.color, Theme.HUD_SHADOW);
                 String name = wp.name, at = wp.x + ", " + wp.y + ", " + wp.z;
                 // one shown in the world can't be navigated to: that would be a second waypoint on top of it
                 boolean navigable = !wp.inWorld;
@@ -871,9 +822,7 @@ public final class MapPois {
         return drawn;
     }
 
-    /** True for a real player, not a server NPC made to look like one (the world's NPCs are player
-     * entities). An NPC has no tab-list entry once spawned (NPC plugins drop it straight after),
-     * often a version-2 id where every real account has version 4, or a name no account can have. */
+    /** A real player, not an NPC (no tab entry, a version 2 id, or a name no account can have). */
     static boolean isRealPlayer(MinecraftClient client, AbstractClientPlayerEntity pl) {
         if (client.getNetworkHandler() == null || client.getNetworkHandler().getPlayerListEntry(pl.getUuid()) == null) return false;
         return isRealPlayer(pl.getUuid(), pl.getName().getString());
