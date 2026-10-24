@@ -6,8 +6,8 @@
 	"description": "An addon for Isles+: a map with waypoints, a health border, item pickups and glowing ground items.",
 	"authors": ["Herator"],
 	"contact": {
-		"sources": "https://github.com/Herator/IslesPlusPlus",
-		"issues": "https://github.com/Herator/IslesPlusPlus/issues"
+		"sources": "https://github.com/Herator/IslesPlusCompanion",
+		"issues": "https://github.com/Herator/IslesPlusCompanion/issues"
 	},
 	"license": "CC-BY-NC-SA-4.0",
 	"icon": "assets/islesplusplus/icon.png",
