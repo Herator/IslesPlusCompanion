@@ -1,4 +1,4 @@
-# Isles++
+# Isles+ Companion
 
 An addon for [Isles+](https://github.com/TMP-devs/IslesPlus). Needs Isles+ 1.0.3 or newer installed next to it.
 
@@ -24,7 +24,7 @@ Started as a few things I wanted in Isles+ and kept growing. What's in it:
 
 The paths, waypoints and chat tab windows (and the full map) are on a paper scroll that unrolls when it opens. Don't like the animation? Turn off Unroll animation in the Map row.
 
-Settings are in the Isles+ menu (QOL tab). The minimap and Item Pickups can be moved in the HUD editor, keys are under Options > Controls > Isles++.
+Settings are in the Isles+ menu (QOL tab). The minimap and Item Pickups can be moved in the HUD editor, keys are under Options > Controls > Isles+ Companion.
 Everything saves to `config/islesplusplus/`. If you had a map from back when this was part of Isles+ (`config/islesplus/map`) it gets moved over on first start.
 
 ## Known issues

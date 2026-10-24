@@ -65,7 +65,7 @@ public final class SavedWaypoints {
                 try {
                     waypoints.addAll(fromJson(JsonParser.parseString(Files.readString(f, StandardCharsets.UTF_8))));
                 } catch (IOException | RuntimeException e) {
-                    IslesLog.runtimeInfo("[Isles++] saved waypoints unreadable: " + e);
+                    IslesLog.runtimeInfo("[Isles+ Companion] saved waypoints unreadable: " + e);
                 }
             }
         }
@@ -99,7 +99,7 @@ public final class SavedWaypoints {
             Files.createDirectories(file().getParent());
             Files.writeString(file(), new GsonBuilder().setPrettyPrinting().create().toJson(toJson(waypoints)), StandardCharsets.UTF_8);
         } catch (IOException e) {
-            IslesLog.runtimeInfo("[Isles++] could not save waypoints: " + e);
+            IslesLog.runtimeInfo("[Isles+ Companion] could not save waypoints: " + e);
         }
     }
 
@@ -134,7 +134,7 @@ public final class SavedWaypoints {
                 if (o.has("beam")) w.beam = o.get("beam").getAsBoolean();
                 out.add(w);
             } catch (RuntimeException e) {
-                IslesLog.runtimeInfo("[Isles++] saved waypoint skipped: " + el);
+                IslesLog.runtimeInfo("[Isles+ Companion] saved waypoint skipped: " + el);
             }
         }
         return out;

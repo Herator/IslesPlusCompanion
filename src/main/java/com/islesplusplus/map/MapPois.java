@@ -409,7 +409,7 @@ public final class MapPois {
                 }
             }
         } catch (IOException | RuntimeException e) {
-            IslesLog.runtimeInfo("[Isles++] map points file unreadable: " + e);
+            IslesLog.runtimeInfo("[Isles+ Companion] map points file unreadable: " + e);
         }
     }
 
@@ -419,7 +419,7 @@ public final class MapPois {
         for (JsonElement el : json.getAsJsonObject().getAsJsonArray("pois")) {
             Poi p = parse(el);
             if (p == null) {
-                IslesLog.runtimeInfo("[Isles++] map point skipped (needs group, type, x, y, z): " + el);
+                IslesLog.runtimeInfo("[Isles+ Companion] map point skipped (needs group, type, x, y, z): " + el);
                 continue;
             }
             Poi c = canonical(p);
@@ -470,7 +470,7 @@ public final class MapPois {
             Files.writeString(localFile(), GSON.toJson(root), StandardCharsets.UTF_8);
             unsaved = false;
         } catch (IOException e) {
-            IslesLog.runtimeInfo("[Isles++] could not save map points: " + e);
+            IslesLog.runtimeInfo("[Isles+ Companion] could not save map points: " + e);
         }
     }
 
@@ -609,7 +609,7 @@ public final class MapPois {
                     if (x1 < 0) { x0 = 0; y0 = 0; x1 = w - 1; y1 = h - 1; }
                     return Optional.of(new Icon(id, w, h, x0, y0, x1 - x0 + 1, y1 - y0 + 1));
                 } catch (IOException e) {
-                    IslesLog.runtimeInfo("[Isles++] map icon " + id + " unreadable: " + e);
+                    IslesLog.runtimeInfo("[Isles+ Companion] map icon " + id + " unreadable: " + e);
                 }
             }
             return Optional.empty();

@@ -106,7 +106,7 @@ public class IslesPlusPlus implements ClientModInitializer {
         try {
             tick.run();
         } catch (Exception e) {
-            IslesLog.runtimeInfo("[Isles++] " + feature + " tick failed: " + e);
+            IslesLog.runtimeInfo("[Isles+ Companion] " + feature + " tick failed: " + e);
         }
     }
 
@@ -273,7 +273,7 @@ public class IslesPlusPlus implements ClientModInitializer {
             Files.createDirectories(to.getParent());
             Files.move(from, to);
         } catch (Exception e) {
-            IslesLog.runtimeInfo("[Isles++] could not move " + from + " to " + to + ": " + e);
+            IslesLog.runtimeInfo("[Isles+ Companion] could not move " + from + " to " + to + ": " + e);
         }
     }
 }

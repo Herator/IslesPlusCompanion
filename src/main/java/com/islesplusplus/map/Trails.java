@@ -75,7 +75,7 @@ public final class Trails {
                 saved.addAll(readAll(pathsDir()));
                 if (Files.exists(activeFile())) active = Files.readString(activeFile(), StandardCharsets.UTF_8).trim();
             } catch (IOException | RuntimeException e) {
-                IslesLog.runtimeInfo("[Isles++] saved paths unreadable: " + e);
+                IslesLog.runtimeInfo("[Isles+ Companion] saved paths unreadable: " + e);
             }
         }
         return saved;
@@ -109,7 +109,7 @@ public final class Trails {
                     Trail t = GSON.fromJson(Files.readString(f, StandardCharsets.UTF_8), Trail.class);
                     if (valid(t) && find(out, t.name) == null) out.add(t);
                 } catch (RuntimeException e) {
-                    IslesLog.runtimeInfo("[Isles++] skipped unreadable path " + f.getFileName() + ": " + e);
+                    IslesLog.runtimeInfo("[Isles+ Companion] skipped unreadable path " + f.getFileName() + ": " + e);
                 }
             }
         }
@@ -142,7 +142,7 @@ public final class Trails {
             writeAll(pathsDir(), saved);
             saveActive();
         } catch (IOException e) {
-            IslesLog.runtimeInfo("[Isles++] could not save paths: " + e);
+            IslesLog.runtimeInfo("[Isles+ Companion] could not save paths: " + e);
         }
     }
 
@@ -156,7 +156,7 @@ public final class Trails {
         try {
             saveActive();
         } catch (IOException e) {
-            IslesLog.runtimeInfo("[Isles++] could not save paths: " + e);
+            IslesLog.runtimeInfo("[Isles+ Companion] could not save paths: " + e);
         }
     }
 

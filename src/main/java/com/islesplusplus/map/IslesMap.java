@@ -148,7 +148,7 @@ public final class IslesMap {
                 try (InputStream in = res.getInputStream()) {
                     put(id.getPath().contains("/heights/") ? shippedHeights : shipped, fileName(id.getPath()), NativeImage.read(in));
                 } catch (IOException e) {
-                    IslesLog.runtimeInfo("[Isles++] map tile " + id + " unreadable: " + e);
+                    IslesLog.runtimeInfo("[Isles+ Companion] map tile " + id + " unreadable: " + e);
                 }
             });
         readDir(localDir(), local);
@@ -188,11 +188,11 @@ public final class IslesMap {
                 try (InputStream in = Files.newInputStream(f)) {
                     put(images, fileName(f.getFileName().toString()), NativeImage.read(in));
                 } catch (IOException e) {
-                    IslesLog.runtimeInfo("[Isles++] map tile " + f + " unreadable: " + e);
+                    IslesLog.runtimeInfo("[Isles+ Companion] map tile " + f + " unreadable: " + e);
                 }
             });
         } catch (IOException e) {
-            IslesLog.runtimeInfo("[Isles++] map folder " + dir + " unreadable: " + e);
+            IslesLog.runtimeInfo("[Isles+ Companion] map folder " + dir + " unreadable: " + e);
         }
     }
 
@@ -251,7 +251,7 @@ public final class IslesMap {
                         heights.writeTo(heightsDir().resolve(file));
                     }
                 } catch (IOException | RuntimeException e) {
-                    IslesLog.runtimeInfo("[Isles++] could not save map tile " + file + ": " + e);
+                    IslesLog.runtimeInfo("[Isles+ Companion] could not save map tile " + file + ": " + e);
                     MinecraftClient.getInstance().execute(() -> t.unsaved = true);   // try again next save
                 }
             });
@@ -260,7 +260,7 @@ public final class IslesMap {
             try {
                 WRITER.submit(() -> {}).get();
             } catch (InterruptedException | ExecutionException e) {
-                IslesLog.runtimeInfo("[Isles++] map save interrupted: " + e);
+                IslesLog.runtimeInfo("[Isles+ Companion] map save interrupted: " + e);
             }
         }
     }

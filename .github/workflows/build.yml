@@ -1,4 +1,4 @@
-# Builds Isles++ and runs its tests on every push and pull request; the jar is attached to each run.
+# Builds Isles+ Companion and runs its tests on every push and pull request; the jar is attached to each run.
 # Isles+ isn't in this repo (All Rights Reserved), so the official jar is downloaded from its GitHub release.
 
 name: build
@@ -33,5 +33,5 @@ jobs:
       - name: upload jar
         uses: actions/upload-artifact@v7
         with:
-          name: islesplusplus
+          name: isles-plus-companion
           path: build/libs/

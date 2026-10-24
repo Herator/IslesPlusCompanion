@@ -25,7 +25,7 @@ public final class AddonConfig {
         try {
             if (Files.exists(path())) o = JsonParser.parseString(Files.readString(path())).getAsJsonObject();
         } catch (Exception e) {
-            IslesLog.runtimeInfo("[Isles++] config unreadable, using defaults: " + e);
+            IslesLog.runtimeInfo("[Isles+ Companion] config unreadable, using defaults: " + e);
         }
         HealthBorder.enabled    = bool(o, "healthBorderEnabled", true);
         HealthBorder.hue        = num(o, "healthBorderHue", 0f);
@@ -65,7 +65,7 @@ public final class AddonConfig {
             Files.createDirectories(path().getParent());
             Files.writeString(path(), new GsonBuilder().setPrettyPrinting().create().toJson(o));
         } catch (Exception e) {
-            IslesLog.runtimeInfo("[Isles++] could not save config: " + e);
+            IslesLog.runtimeInfo("[Isles+ Companion] could not save config: " + e);
         }
     }
 
